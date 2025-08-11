@@ -1,4 +1,4 @@
-# PostgreSQL Replication Cluster with Docker Swarm
+# Swarm Postgres Cluster
 
 Bu proje Docker Swarm kullanarak PostgreSQL master-slave replikasyon cluster'ı oluşturmak için tasarlanmıştır. Proje, yüksek erişilebilirlik sağlamak amacıyla master sunucu üzerinde yazma işlemlerini, slave sunucu üzerinde ise okuma işlemlerini gerçekleştirecek şekilde yapılandırılmıştır.
 
