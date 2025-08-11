@@ -3,7 +3,12 @@ version: '3.8'
 configs:
   init_replication:
     file: ./master-init/init-replication.sql
-
+  pg_hba_config:
+    file: ./master-init/pg_hba.conf
+  setup_hba:
+    file: ./master-init/setup-hba.sh
+  setup_slave:
+    file: ./slave-init/setup-slave.sh
 
 services:
   postgres-master:
@@ -12,8 +17,14 @@ services:
       - master-data:/var/lib/postgresql/data
     configs:
       - source: init_replication
-        target: /docker-entrypoint-initdb.d/01-init-replication.sql
+        target: /docker-entrypoint-initdb.d/01-init-replication.sql # .sql dosyalari ilk acilista sql olarak execute ediliyor. PostgreSQL Docker Initialization bu sekilde calisiyor. Sorgulama inan sadece
         mode: 0644
+      - source: pg_hba_config
+        target: /docker-entrypoint-initdb.d/pg_hba.conf
+        mode: 0644
+      - source: setup_hba
+        target: /docker-entrypoint-initdb.d/02-setup-hba.sh # Bu Script Otomatik olarak calistirilacak. /docker-entrypoint-initdb.d/ dizinindeki butun .sh dosyalari ilk boot ile otomatik olarak calistiriliyor.
+        mode: 0755
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -34,14 +45,19 @@ services:
           - node.labels.purpose == master
     networks:
       - postgre-cluster
-  postgres-standby:
+  postgres-slave:
     image: postgres:17
     volumes:
-      - standby-data:/var/lib/postgresql/data
+      - slave-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123
+    configs:
+      - source: setup_slave
+        target: /setup-slave.sh
+        mode: 0755
+    entrypoint: /setup-slave.sh # Default entrypoint kalirsa postgresql direkt bir veritabani olusturuyor. Ozel bir entrypoint gerekiyor. Replikasyon modunda calismasi icin
     deploy:
       replicas: 1
       placement:
@@ -49,9 +65,12 @@ services:
           - node.labels.purpose == worker
     networks:
       - postgre-cluster
+
 networks:
   postgre-cluster:
     driver: overlay
+    attachable: true
+
 volumes:
-  standby-data:
+  slave-data:
   master-data:
