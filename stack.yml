@@ -1,0 +1,57 @@
+version: '3.8'
+
+configs:
+  init_replication:
+    file: ./master-init/init-replication.sql
+
+
+services:
+  postgres-master:
+    image: postgres:17
+    volumes:
+      - master-data:/var/lib/postgresql/data
+    configs:
+      - source: init_replication
+        target: /docker-entrypoint-initdb.d/01-init-replication.sql
+        mode: 0644
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123
+    command: |
+      postgres 
+          -c listen_addresses='*'
+          -c wal_level=replica
+          -c max_wal_senders=5
+          -c hot_standby=on
+          -c wal_log_hints=on
+          -c synchronous_commit=off
+          -c max_replication_slots=2
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.purpose == master
+    networks:
+      - postgre-cluster
+  postgres-standby:
+    image: postgres:17
+    volumes:
+      - standby-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.purpose == worker
+    networks:
+      - postgre-cluster
+networks:
+  postgre-cluster:
+    driver: overlay
+volumes:
+  standby-data:
+  master-data:
