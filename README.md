@@ -15,10 +15,9 @@ Bu proje Docker Swarm kullanarak PostgreSQL master-slave replikasyon cluster'ı 
     └── setup-slave.sh         # Slave replikasyon kurulum scripti
 ```
 
-## Nasıl Çalışır
+## Başlangıçta
 
 ### Master Sunucu
-- PostgreSQL 17 kullanır
 - Replikasyon için gerekli parametrelerle başlatılır
 - `replication` kullanıcısı ve `db2` replikasyon slotu oluşturur
 - Tüm IP adreslerinden bağlantı kabul eder(Duruma göre **sıkılaştırma kesinlikle önerilir!!!**)
